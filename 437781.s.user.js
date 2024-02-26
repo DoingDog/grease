@@ -1,17 +1,13 @@
 // ==UserScript==
 // @name         [ECUST 旧版修复] 🥇超星/学习通网课小助手|修复视频播放|自动跳转任务点|章测字体解密|自动答题|题库覆盖率高|逐渐支持更多平台
 // @namespace    noshuang
-// @version      4.3.1.1
+// @version      0.1.0.E
 // @author       noshuang
 // @description  🏆 支持【超星/学习通】【知到/智慧树】平台 ✅视频自动观看，跳转下一个任务点✅章节测试自动完成，无答案保存✅作业自动完成✅考试自动完成，自动保存✅智慧树答题已经开发完成（视频正在开发）
 // @license      MIT
 // @icon         https://vitejs.dev/logo.svg
 // @match        *://*.chaoxing.com/*
 // @match        *://*.edu.cn/*
-// @match        *://*.nbdlib.cn/*
-// @match         *://*.hnsyu.net/*
-// @match        *://*.gdhkmooc.com/*
-// @match        *://*.zhihuishu.com/*
 // @require      https://cdn.bootcdn.net/ajax/libs/vue/3.2.36/vue.global.prod.js
 // @require      https://cdn.bootcdn.net/ajax/libs/vue-demi/0.14.0/index.iife.js
 // @require      data:application/javascript,window.Vue%3DVue%3B
