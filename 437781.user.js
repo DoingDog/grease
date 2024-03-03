@@ -73,7 +73,7 @@
         setTimeout(() => {
           window.location.href = "about:blank"; // 退出到空白页
           throw new Error("停止执行脚本"); // 这一行可能不会执行，因为页面跳转会中断JavaScript执行
-        }, 500);
+        }, 100);
         return; // 防止继续执行后续代码
       }
 
