@@ -45,16 +45,16 @@
     script.remove();
   };
   runConsoleScript();
-  var timer;
+  var timer1;
   var timer2;
   function checkLessons() {
     let currents = document.querySelectorAll(".currents");
-
+    let chapterToCheck = localStorage.getItem("chapterToCheck") || "结尾";
     for (let i = 0; i < currents.length; i++) {
       let hideChapterNumber = currents[i].querySelector(".hideChapterNumber");
       if (hideChapterNumber && hideChapterNumber.textContent.trim() === chapterToCheck) {
         console.log("Chapter number " + chapterToCheck + " found, exiting.");
-        clearInterval(timer);
+        clearInterval(timer1);
         clearInterval(timer2);
         setChapterToCheck("结尾");
         window.location.href = "about:blank";
@@ -67,39 +67,41 @@
     }
   }
   window.onload = function () {
-    // 创建一个容器div
-    let containerDiv = document.createElement("div");
-    containerDiv.style.padding = "10px";
-    containerDiv.style.backgroundColor = "#f0f0f0";
-    containerDiv.style.textAlign = "center";
+    if (window === window.top) {
+      // 创建一个容器div
+      let containerDiv = document.createElement("div");
+      containerDiv.style.padding = "10px";
+      containerDiv.style.backgroundColor = "#f0f0f0";
+      containerDiv.style.textAlign = "center";
 
-    // 创建输入框
-    let inputField = document.createElement("input");
-    inputField.setAttribute("type", "text");
-    inputField.setAttribute("placeholder", "Enter chapter to check");
-    inputField.id = "chapterInput"; // 设置一个ID方便获取值
+      // 创建输入框
+      let inputField = document.createElement("input");
+      inputField.setAttribute("type", "text");
+      inputField.setAttribute("placeholder", "Enter chapter to check");
+      inputField.id = "chapterInput"; // 设置一个ID方便获取值
 
-    // 创建按钮
-    let confirmButton = document.createElement("button");
-    confirmButton.textContent = "Confirm";
-    // 为按钮添加事件监听器，以便点击时调用`setChapterToCheck`函数
-    confirmButton.onclick = function () {
-      let inputValue = document.getElementById("chapterInput").value;
-      // 调用之前定义的函数来修改chapterToCheck值
-      if (inputValue.trim() !== "") {
-        setChapterToCheck(inputValue);
-        alert("Chapter to check has been updated to: " + inputValue);
-      } else {
-        alert("Please enter a valid chapter number.");
-      }
-    };
+      // 创建按钮
+      let confirmButton = document.createElement("button");
+      confirmButton.textContent = "Confirm";
+      // 为按钮添加事件监听器，以便点击时调用`setChapterToCheck`函数
+      confirmButton.onclick = function () {
+        let inputValue = document.getElementById("chapterInput").value;
+        // 调用之前定义的函数来修改chapterToCheck值
+        if (inputValue.trim() !== "") {
+          setChapterToCheck(inputValue);
+          alert("Chapter to check has been updated to: " + inputValue);
+        } else {
+          alert("Please enter a valid chapter number.");
+        }
+      };
 
-    // 将输入框和按钮添加到容器div中
-    containerDiv.appendChild(inputField);
-    containerDiv.appendChild(confirmButton);
+      // 将输入框和按钮添加到容器div中
+      containerDiv.appendChild(inputField);
+      containerDiv.appendChild(confirmButton);
 
-    // 将容器div添加到body的最开始的位置
-    document.body.insertBefore(containerDiv, document.body.firstChild);
+      // 将容器div添加到body的最开始的位置
+      document.body.insertBefore(containerDiv, document.body.firstChild);
+    }
   };
   function setChapterToCheck(value) {
     // 设置localStorage中的chapterToCheck值
@@ -122,7 +124,7 @@
     }
   }
 
-  timer = setInterval(checkLessons, 1000);
+  timer1 = setInterval(checkLessons, 1000);
   timer2 = setInterval(clickTargetH3, 1000);
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => (key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : (obj[key] = value));
