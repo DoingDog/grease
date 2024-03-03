@@ -1,13 +1,12 @@
 // ==UserScript==
-// @name         [ECUST 旧版修复] 🥇超星/学习通网课小助手|修复视频播放|自动跳转任务点|章测字体解密|自动答题|题库覆盖率高|逐渐支持更多平台
+// @name         [ECUST 旧版修复] 🥇超星学习通｜知到智慧树--网课小助手|修复视频播放|自动跳转任务点|自动答题|超高题库覆盖率|逐渐支持更多平台
 // @namespace    noshuang
-// @version      0.1.0.E
+// @version      0.1.0.E.1
 // @author       noshuang
-// @description  🏆 支持【超星/学习通】【知到/智慧树】平台 ✅视频自动观看，跳转下一个任务点✅章节测试自动完成，无答案保存✅作业自动完成✅考试自动完成，自动保存✅智慧树答题已经开发完成（视频正在开发）
+// @description  🏆 目前已经具有的功能包括：▶️视频自动观看，跳转下一个任务点，📄章节测试、作业自动完成，无答案自动保存💯考试自动完成，自动切换、保存。使用脚本请进入对应平台的页面。目前已经支持的平台：【超星学习通「功能基本完成」】【知到智慧树「目前只支持答题」】
 // @license      MIT
 // @icon         https://vitejs.dev/logo.svg
-// @match        *://*.chaoxing.com/*
-// @match        *://*.edu.cn/*
+// @match        *://mooc.s.ecust.edu.cn/*
 // @require      https://cdn.bootcdn.net/ajax/libs/vue/3.2.36/vue.global.prod.js
 // @require      https://cdn.bootcdn.net/ajax/libs/vue-demi/0.14.0/index.iife.js
 // @require      data:application/javascript,window.Vue%3DVue%3B
@@ -17,10 +16,12 @@
 // @require      https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js
 // @resource     ElementPlus  https://cdn.bootcdn.net/ajax/libs/element-plus/2.3.4/index.css
 // @resource     ttf          https://www.forestpolice.org/ttf/2.0/table.json
-// @connect      api.tikuhai.com
+// @connect      www.tiku.me
 // @connect      cx.icodef.com
 // @grant        GM_getResourceText
+// @grant        GM_getValue
 // @grant        GM_info
+// @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @run-at       document-start
@@ -44,17 +45,67 @@
     script.remove();
   };
   runConsoleScript();
+  var timer;
+  var timer2;
   function checkLessons() {
     let currents = document.querySelectorAll(".currents");
 
     for (let i = 0; i < currents.length; i++) {
+      let hideChapterNumber = currents[i].querySelector(".hideChapterNumber");
+      if (hideChapterNumber && hideChapterNumber.textContent.trim() === chapterToCheck) {
+        console.log("Chapter number " + chapterToCheck + " found, exiting.");
+        clearInterval(timer);
+        clearInterval(timer2);
+        setChapterToCheck("结尾");
+        window.location.href = "about:blank";
+        throw new Error("停止执行脚本");
+      }
       if (currents[i].querySelector(".roundpointStudent.blue") || currents[i].querySelector(".roundpoint.blue")) {
         goback();
         break;
       }
     }
   }
+  window.onload = function () {
+    // 创建一个容器div
+    let containerDiv = document.createElement("div");
+    containerDiv.style.padding = "10px";
+    containerDiv.style.backgroundColor = "#f0f0f0";
+    containerDiv.style.textAlign = "center";
 
+    // 创建输入框
+    let inputField = document.createElement("input");
+    inputField.setAttribute("type", "text");
+    inputField.setAttribute("placeholder", "Enter chapter to check");
+    inputField.id = "chapterInput"; // 设置一个ID方便获取值
+
+    // 创建按钮
+    let confirmButton = document.createElement("button");
+    confirmButton.textContent = "Confirm";
+    // 为按钮添加事件监听器，以便点击时调用`setChapterToCheck`函数
+    confirmButton.onclick = function () {
+      let inputValue = document.getElementById("chapterInput").value;
+      // 调用之前定义的函数来修改chapterToCheck值
+      if (inputValue.trim() !== "") {
+        setChapterToCheck(inputValue);
+        alert("Chapter to check has been updated to: " + inputValue);
+      } else {
+        alert("Please enter a valid chapter number.");
+      }
+    };
+
+    // 将输入框和按钮添加到容器div中
+    containerDiv.appendChild(inputField);
+    containerDiv.appendChild(confirmButton);
+
+    // 将容器div添加到body的最开始的位置
+    document.body.insertBefore(containerDiv, document.body.firstChild);
+  };
+  function setChapterToCheck(value) {
+    // 设置localStorage中的chapterToCheck值
+    localStorage.setItem("chapterToCheck", value);
+    console.log("Chapter to check has been set to: " + value);
+  }
   function clickTargetH3() {
     let h3Elements = document.querySelectorAll("h3");
     let targetElement = null;
@@ -71,8 +122,8 @@
     }
   }
 
-  setInterval(checkLessons, 1000);
-  setInterval(clickTargetH3, 1000);
+  timer = setInterval(checkLessons, 1000);
+  timer2 = setInterval(clickTargetH3, 1000);
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => (key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : (obj[key] = value));
   var __publicField = (obj, key, value) => {
