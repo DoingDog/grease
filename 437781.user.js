@@ -48,6 +48,9 @@
   var timer1;
   var timer2;
   let initialJobCount = null;
+  if (localStorage.getItem("scriptRunCounter") === null) {
+    localStorage.setItem("scriptRunCounter", 0);
+  }
   function checkLessons() {
     let currents = document.querySelectorAll(".currents");
 
@@ -67,8 +70,11 @@
         clearInterval(timer1);
         clearInterval(timer2);
         setChapterToCheck("结尾"); // 假设这是正确设置下一章节的方式
-        window.location.href = "about:blank";
-        throw new Error("停止执行脚本");
+        setTimeout(() => {
+          window.location.href = "about:blank"; // 退出到空白页
+          throw new Error("停止执行脚本"); // 这一行可能不会执行，因为页面跳转会中断JavaScript执行
+        }, 1300);
+        return; // 防止继续执行后续代码
       }
 
       // 检查是否存在并且数值是否减小
@@ -92,6 +98,18 @@
   }
   window.onload = function () {
     if (window === window.top) {
+      let counter = parseInt(localStorage.getItem("scriptRunCounter"), 10);
+      counter++;
+      localStorage.setItem("scriptRunCounter", counter);
+      let titleElement = document.querySelector("h1");
+      if (titleElement) {
+        // 假设 titleElement 是你要添加计时器文字的目标元素
+        // 计数器的值保存在变量 counter 中
+
+        // 更新元素的innerText，将计时器值添加到现有内容前面
+        titleElement.innerText = "程序运行中 <" + counter + "> - " + titleElement.innerText;
+      }
+
       // 创建一个容器div
       let containerDiv = document.createElement("div");
       containerDiv.style.padding = "10px";
