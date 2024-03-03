@@ -47,8 +47,18 @@
   runConsoleScript();
   var timer1;
   var timer2;
+  let initialJobCount = null;
   function checkLessons() {
     let currents = document.querySelectorAll(".currents");
+
+    // 只在初始JobCount未设置时检查并设置它
+    if (initialJobCount === null) {
+      const initialSpan = document.querySelector(".currents .roundpointStudent.orange01.a002.jobCount");
+      if (initialSpan) {
+        initialJobCount = parseInt(initialSpan.textContent, 10); // 将初始的数字存储起来
+      }
+    }
+
     let chapterToCheck = localStorage.getItem("chapterToCheck") || "结尾";
     for (let i = 0; i < currents.length; i++) {
       let hideChapterNumber = currents[i].querySelector(".hideChapterNumber");
@@ -56,12 +66,26 @@
         console.log("Chapter number " + chapterToCheck + " found, exiting.");
         clearInterval(timer1);
         clearInterval(timer2);
-        setChapterToCheck("结尾");
+        setChapterToCheck("结尾"); // 假设这是正确设置下一章节的方式
         window.location.href = "about:blank";
         throw new Error("停止执行脚本");
       }
+
+      // 检查是否存在并且数值是否减小
+      const currentSpan = currents[i].querySelector(".roundpointStudent.orange01.a002.jobCount");
+      if (currentSpan) {
+        const currentJobCount = parseInt(currentSpan.textContent, 10);
+        if (initialJobCount !== null && currentJobCount < initialJobCount) {
+          location.reload(); // 刷新页面
+          return; // 退出函数，不再继续检查
+        }
+      } else if (initialJobCount !== null) {
+        location.reload();
+        return;
+      }
+
       if (currents[i].querySelector(".roundpointStudent.blue") || currents[i].querySelector(".roundpoint.blue")) {
-        goback();
+        goback(); // 假设这是正确的“返回”操作
         break;
       }
     }
@@ -79,7 +103,11 @@
       inputField.setAttribute("type", "text");
       inputField.setAttribute("placeholder", "Enter chapter to check");
       inputField.id = "chapterInput"; // 设置一个ID方便获取值
-
+      // 尝试从本地存储获取chapterToCheck的值
+      let storedChapter = localStorage.getItem("chapterToCheck");
+      if (storedChapter) {
+        inputField.value = storedChapter; // 如果存在，则设置为输入框的值
+      }
       // 创建按钮
       let confirmButton = document.createElement("button");
       confirmButton.textContent = "Confirm";
@@ -126,6 +154,7 @@
 
   timer1 = setInterval(checkLessons, 1000);
   timer2 = setInterval(clickTargetH3, 1000);
+
   var __defProp = Object.defineProperty;
   var __defNormalProp = (obj, key, value) => (key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : (obj[key] = value));
   var __publicField = (obj, key, value) => {
