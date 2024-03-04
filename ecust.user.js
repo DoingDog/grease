@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         [ECUST] 华东理工旧版学习通全自动刷课
+// @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.0.3
-// @author       dd
+// @version      0.1.3
+// @author       gpt-4-0125-preview
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
 // @icon         https://s.ecust.edu.cn/favicon.ico
