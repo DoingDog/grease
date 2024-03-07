@@ -271,6 +271,18 @@
     console.log(`Auto return delay has been set to: ${value}`);
   }
   function clickTargetH3() {
+    const spans = document.querySelectorAll("span.articlename");
+    spans.forEach((span) => {
+      // 查找该span元素下的所有a元素
+      const links = span.querySelectorAll("a");
+      links.forEach((link) => {
+        const originalHref = link.href; // 获取原始href
+        if (!originalHref.includes("&mooc2=1")) {
+          // 检查是否已包含&mooc2=1
+          link.href = `${originalHref}&mooc2=1`; // 添加参数
+        }
+      });
+    });
     let h3Elements = document.querySelectorAll("h3");
     let targetElement = null;
     for (let i = 0; i < h3Elements.length; i++) {
