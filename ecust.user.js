@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.1.4
+// @version      0.2
 // @author       gpt-4-0125-preview
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
@@ -58,7 +58,6 @@
   if (localStorage.getItem("courseSelectionMode") === null) {
     localStorage.setItem("courseSelectionMode", "0");
   }
-
   function checkLessons() {
     let currents = document.querySelectorAll(".currents");
     // 只在初始JobCount未设置时检查并设置它
@@ -147,9 +146,9 @@
         let inputValue = document.getElementById("chapterInput").value;
         if (inputValue.trim() !== "") {
           setChapterToCheck(inputValue);
-          alert(`Chapter to check has been updated to: ${inputValue}`);
+          console.log(`Chapter to check has been updated to: ${inputValue}`);
         } else {
-          alert("Please enter a valid chapter number.");
+          alert("输入错误");
         }
       };
       // 创建自动返回延时输入框
@@ -168,9 +167,9 @@
         let inputValue = document.getElementById("delayInput").value;
         if (inputValue.trim() !== "") {
           setAutoReturnDelay(inputValue);
-          alert(`Auto return delay has been updated to: ${inputValue} seconds`);
+          console.log(`Auto return delay has been updated to: ${inputValue} seconds`);
         } else {
-          alert("Please enter a valid delay time in seconds.");
+          alert("输入错误");
         }
       };
       // 将元素添加到容器div中
@@ -192,7 +191,7 @@
       // 为开关添加事件监听器
       autoManageSwitch.onchange = () => {
         localStorage.setItem("autoManageMode", autoManageSwitch.checked ? "1" : "0");
-        alert(`全自动托管模式已${autoManageSwitch.checked ? "启用" : "禁用"}`);
+        //alert(`全自动托管模式已${autoManageSwitch.checked ? "启用" : "禁用"}`);
         window.location.reload();
       };
       // 创建重置按钮
@@ -203,15 +202,13 @@
         localStorage.removeItem("chapterToCheck");
         localStorage.removeItem("autoReturnDelay");
         localStorage.removeItem("autoManageMode");
-        alert("所有设置已重置");
+        //alert("所有设置已重置");
         window.location.reload(); // 重载页面以反映重置后的状态
       };
       // 将新创建的元素添加到容器div中
       containerDiv.appendChild(document.createElement("br"));
       containerDiv.appendChild(autoManageSwitch);
       containerDiv.appendChild(autoManageLabel);
-      containerDiv.appendChild(document.createElement("br"));
-      containerDiv.appendChild(resetButton);
       // 创建选课模式开关
       let courseSelectionSwitch = document.createElement("input");
       courseSelectionSwitch.setAttribute("type", "checkbox");
@@ -225,13 +222,15 @@
       // 为开关添加事件监听器
       courseSelectionSwitch.onchange = () => {
         localStorage.setItem("courseSelectionMode", courseSelectionSwitch.checked ? "1" : "0");
-        alert(`选课模式已${courseSelectionSwitch.checked ? "启用" : "禁用"}`);
+        //alert(`选课模式已${courseSelectionSwitch.checked ? "启用" : "禁用"}`);
         window.location.reload();
       };
       // 将新创建的元素添加到容器div中
       containerDiv.appendChild(document.createElement("br"));
       containerDiv.appendChild(courseSelectionSwitch);
       containerDiv.appendChild(courseSelectionLabel);
+      containerDiv.appendChild(document.createElement("br"));
+      containerDiv.appendChild(resetButton);
       // 将容器div添加到body的最开始的位置
       document.body.insertBefore(containerDiv, document.body.firstChild);
     }
@@ -302,4 +301,29 @@
   } else if (localStorage.getItem("courseSelectionMode") === "1") {
     var clickInterval = setInterval(clickTargetElement, 100);
   }
+  function hideElements() {
+    // 隐藏具有特定data-v-app属性的<div>
+    let targetElementVApp = document.querySelector('div[data-v-app=""]');
+    if (targetElementVApp) {
+      targetElementVApp.style.display = "none";
+    }
+    // 隐藏所有class为main-page的<div>
+    let targetElementsMainPage = document.querySelectorAll("div.main-page");
+    targetElementsMainPage.forEach(({ style }) => {
+      style.display = "none";
+    });
+  }
+  // 使用MutationObserver监听DOM变化
+  const observer = new MutationObserver((mutations) => {
+    hideElements(); // 每次DOM变化都尝试隐藏元素
+  });
+  // 定义要观察的配置
+  const config = {
+    childList: true,
+    subtree: true,
+  };
+  // 在文档根节点上开始监听
+  observer.observe(document.body, config);
+  // 首次运行以隐藏初始元素
+  hideElements();
 })();
