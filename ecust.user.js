@@ -55,6 +55,10 @@
   if (localStorage.getItem("autoManageMode") === null) {
     localStorage.setItem("autoManageMode", "0");
   }
+  if (localStorage.getItem("courseSelectionMode") === null) {
+    localStorage.setItem("courseSelectionMode", "0");
+  }
+
   function checkLessons() {
     let currents = document.querySelectorAll(".currents");
     // 只在初始JobCount未设置时检查并设置它
@@ -208,11 +212,56 @@
       containerDiv.appendChild(autoManageLabel);
       containerDiv.appendChild(document.createElement("br"));
       containerDiv.appendChild(resetButton);
+      // 创建选课模式开关
+      let courseSelectionSwitch = document.createElement("input");
+      courseSelectionSwitch.setAttribute("type", "checkbox");
+      courseSelectionSwitch.id = "courseSelectionSwitch";
+      let storedCourseSelectionMode = localStorage.getItem("courseSelectionMode");
+      courseSelectionSwitch.checked = storedCourseSelectionMode === "1"; // 如果存储值为1，则选中
+      // 创建选课模式标签
+      let courseSelectionLabel = document.createElement("label");
+      courseSelectionLabel.setAttribute("for", "courseSelectionSwitch");
+      courseSelectionLabel.textContent = "选课模式";
+      // 为开关添加事件监听器
+      courseSelectionSwitch.onchange = () => {
+        localStorage.setItem("courseSelectionMode", courseSelectionSwitch.checked ? "1" : "0");
+        alert(`选课模式已${courseSelectionSwitch.checked ? "启用" : "禁用"}`);
+        window.location.reload();
+      };
+      // 将新创建的元素添加到容器div中
+      containerDiv.appendChild(document.createElement("br"));
+      containerDiv.appendChild(courseSelectionSwitch);
+      containerDiv.appendChild(courseSelectionLabel);
       // 将容器div添加到body的最开始的位置
       document.body.insertBefore(containerDiv, document.body.firstChild);
     }
   };
   // 其他函数定义...
+  function isLoggedIn() {
+    // 查找页面上是否有特定的“退出登录”链接
+    const logoutLink = document.querySelector('a[href="#"][onclick="logout()"]');
+    return logoutLink !== null;
+  }
+  function clickTargetElement() {
+    // 如果未登录，则显示提示并停止自动点击
+    if (!isLoggedIn()) {
+      alert("未登录，请先登录！");
+      clearInterval(clickInterval); // 停止setInterval循环
+      return;
+    }
+    // 寻找ID为"clazzApplyBtn"的a标签
+    const clazzApplyBtn = document.getElementById("clazzApplyBtn");
+    if (clazzApplyBtn && clazzApplyBtn.tagName.toUpperCase() === "A") {
+      clazzApplyBtn.click();
+      console.log("已点击: clazzApplyBtn");
+    }
+    // 寻找ID为"iboxAlertOk-confirm"的a标签
+    const iboxAlertOkConfirm = document.getElementById("iboxAlertOk-confirm");
+    if (iboxAlertOkConfirm && iboxAlertOkConfirm.tagName.toUpperCase() === "A") {
+      iboxAlertOkConfirm.click();
+      console.log("已点击: iboxAlertOk-confirm");
+    }
+  }
   function setChapterToCheck(value) {
     localStorage.setItem("chapterToCheck", value);
     console.log(`Chapter to check has been set to: ${value}`);
@@ -238,5 +287,7 @@
   if (localStorage.getItem("autoManageMode") === "1") {
     timer1 = setInterval(checkLessons, 1000);
     timer2 = setInterval(clickTargetH3, 1000);
+  } else if (localStorage.getItem("courseSelectionMode") === "1") {
+    var clickInterval = setInterval(clickTargetElement, 100);
   }
 })();
