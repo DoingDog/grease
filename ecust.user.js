@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.1.3
+// @version      0.1.4
 // @author       gpt-4-0125-preview
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
@@ -14,7 +14,7 @@
 // @require      https://cdn.bootcdn.net/ajax/libs/pinia/2.0.35/pinia.iife.min.js
 // @require      https://cdn.bootcdn.net/ajax/libs/rxjs/7.8.0/rxjs.umd.min.js
 // @require      https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js
-// @require      https://update.greasyfork.org/scripts/488962.user.js
+// @require      https://update.greasyfork.org/scripts/488083.user.js
 // @resource     ElementPlus  https://cdn.bootcdn.net/ajax/libs/element-plus/2.3.4/index.css
 // @resource     ttf          https://www.forestpolice.org/ttf/2.0/table.json
 // @connect      www.tiku.me
