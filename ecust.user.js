@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.2.1
+// @version      0.3
 // @author       gpt-4-0125-preview
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
@@ -29,40 +29,6 @@
 // ==/UserScript==
 
 (() => {
-  const consoleScript = `window.addEventListener("mouseout",t=>{t.stopImmediatePropagation(),t.stopPropagation(),t.preventDefault()},!0);`;
-  // 运行控制台脚本
-  const runConsoleScript = () => {
-    const script = document.createElement("script");
-    script.textContent = consoleScript;
-    document.head.appendChild(script);
-    script.remove();
-  };
-  runConsoleScript();
-  function hideElements() {
-    // 隐藏具有特定data-v-app属性的<div>
-    let targetElementVApp = document.querySelector('div[data-v-app=""]');
-    if (targetElementVApp) {
-      targetElementVApp.style.display = "none";
-    }
-    // 隐藏所有class为main-page的<div>
-    let targetElementsMainPage = document.querySelectorAll("div.main-page");
-    targetElementsMainPage.forEach(({ style }) => {
-      style.display = "none";
-    });
-  }
-  // 使用MutationObserver监听DOM变化
-  const observer = new MutationObserver((mutations) => {
-    hideElements(); // 每次DOM变化都尝试隐藏元素
-  });
-  // 定义要观察的配置
-  const config = {
-    childList: true,
-    subtree: true,
-  };
-  // 在文档根节点上开始监听
-  observer.observe(document.body, config);
-  // 首次运行以隐藏初始元素
-  hideElements();
   let timer1;
   let timer2;
   let initialJobCount = null;
@@ -73,7 +39,7 @@
     localStorage.setItem("chapterToCheck", "不自动停止");
   }
   if (localStorage.getItem("autoReturnDelay") === null) {
-    localStorage.setItem("autoReturnDelay", 100);
+    localStorage.setItem("autoReturnDelay", 60000);
   }
   if (localStorage.getItem("autoManageMode") === null) {
     localStorage.setItem("autoManageMode", "0");
@@ -199,6 +165,42 @@
       if (anchor) anchor.click();
     }
   }
+  document.addEventListener("DOMContentLoaded", () => {
+    const consoleScript = `window.addEventListener("mouseout",t=>{t.stopImmediatePropagation(),t.stopPropagation(),t.preventDefault()},!0);`;
+    // 运行控制台脚本
+    const runConsoleScript = () => {
+      const script = document.createElement("script");
+      script.textContent = consoleScript;
+      document.head.appendChild(script);
+      script.remove();
+    };
+    runConsoleScript();
+    function hideElements() {
+      // 隐藏具有特定data-v-app属性的<div>
+      let targetElementVApp = document.querySelector('div[data-v-app=""]');
+      if (targetElementVApp) {
+        targetElementVApp.style.display = "none";
+      }
+      // 隐藏所有class为main-page的<div>
+      let targetElementsMainPage = document.querySelectorAll("div.main-page");
+      targetElementsMainPage.forEach(({ style }) => {
+        style.display = "none";
+      });
+    }
+    // 使用MutationObserver监听DOM变化
+    const observer = new MutationObserver((mutations) => {
+      hideElements(); // 每次DOM变化都尝试隐藏元素
+    });
+    // 定义要观察的配置
+    const config = {
+      childList: true,
+      subtree: true,
+    };
+    // 在文档根节点上开始监听
+    observer.observe(document.body, config);
+    // 首次运行以隐藏初始元素
+    hideElements();
+  });
   window.onload = () => {
     if (window === window.top) {
       let counter = parseInt(localStorage.getItem("scriptRunCounter"), 10) || 0;
