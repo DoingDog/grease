@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.3
-// @author       gpt-4-0125-preview
+// @version      0.3.1
+// @author       gpt-4-turbo
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
 // @icon         https://s.ecust.edu.cn/favicon.ico
@@ -64,6 +64,7 @@
         clearInterval(timer1);
         clearInterval(timer2);
         setChapterToCheck("不自动停止"); // 假设这是正确设置下一章节的方式
+        localStorage.setItem("autoManageMode", "0");
         window.location.href = "about:blank";
         return; // 防止继续执行后续代码
       }
@@ -165,6 +166,21 @@
       if (anchor) anchor.click();
     }
   }
+  function getChapterId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("chapterId");
+  }
+  // 构建新的URL并跳转
+  function navigateToNewChapterId(chapterId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set("chapterId", chapterId);
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    const a = document.createElement("a");
+    a.href = newUrl;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+  }
   document.addEventListener("DOMContentLoaded", () => {
     const consoleScript = `window.addEventListener("mouseout",t=>{t.stopImmediatePropagation(),t.stopPropagation(),t.preventDefault()},!0);`;
     // 运行控制台脚本
@@ -226,7 +242,7 @@
       }
       // 创建确认按钮
       let confirmButtonChapter = document.createElement("button");
-      confirmButtonChapter.textContent = "设置";
+      confirmButtonChapter.textContent = "设置终止";
       confirmButtonChapter.onclick = () => {
         let inputValue = document.getElementById("chapterInput").value;
         if (inputValue.trim() !== "") {
@@ -247,7 +263,7 @@
       }
       // 创建确认按钮
       let confirmButtonDelay = document.createElement("button");
-      confirmButtonDelay.textContent = "设置";
+      confirmButtonDelay.textContent = "设置延时";
       confirmButtonDelay.onclick = () => {
         let inputValue = document.getElementById("delayInput").value;
         if (inputValue.trim() !== "") {
@@ -328,23 +344,48 @@
       resetButton.style = "cursor: pointer; margin-top: 20px; padding: 10px 15px; border: none; border-radius: 4px; background-color: #dc3545; color: white;";
       resetButton.onmouseover = () => (resetButton.style.backgroundColor = "#c82333"); // Hover效果
       resetButton.onmouseleave = () => (resetButton.style.backgroundColor = "#dc3545"); // 鼠标离开时恢复颜色
-      // 将元素添加到容器div中
-      containerDiv.appendChild(inputFieldChapter);
-      containerDiv.appendChild(confirmButtonChapter);
-      containerDiv.appendChild(document.createElement("br")); // 添加换行，美观分隔
-      containerDiv.appendChild(inputFieldDelay);
-      containerDiv.appendChild(confirmButtonDelay);
       // 将新创建的元素添加到容器div中
-      containerDiv.appendChild(document.createElement("br"));
-      containerDiv.appendChild(autoManageSwitch);
-      containerDiv.appendChild(autoManageLabel);
-      // 将新创建的元素添加到容器div中
-      containerDiv.appendChild(document.createElement("br"));
-      containerDiv.appendChild(courseSelectionSwitch);
-      containerDiv.appendChild(courseSelectionLabel);
-      containerDiv.appendChild(document.createElement("br"));
-      containerDiv.appendChild(resetButton);
-      // 将容器div添加到body的最开始的位置
+      if (window.location.href.indexOf("https://mooc.s.ecust.edu.cn/course/") === 0) {
+        containerDiv.appendChild(document.createElement("br"));
+        containerDiv.appendChild(courseSelectionSwitch);
+        containerDiv.appendChild(courseSelectionLabel);
+      } else {
+        // 将元素添加到容器div中
+        containerDiv.appendChild(inputFieldChapter);
+        containerDiv.appendChild(confirmButtonChapter);
+        containerDiv.appendChild(document.createElement("br")); // 添加换行，美观分隔
+        containerDiv.appendChild(inputFieldDelay);
+        containerDiv.appendChild(confirmButtonDelay);
+        // 将新创建的元素添加到容器div中
+        containerDiv.appendChild(document.createElement("br"));
+        containerDiv.appendChild(autoManageSwitch);
+        containerDiv.appendChild(autoManageLabel);
+        containerDiv.appendChild(document.createElement("br"));
+        containerDiv.appendChild(resetButton);
+        // 将容器div添加到body的最开始的位置
+        const chapterId = parseInt(getChapterId(), 10);
+        if (!isNaN(chapterId)) {
+          const decrementButton = document.createElement("button");
+          decrementButton.textContent = "<-";
+          decrementButton.onclick = () => {
+            navigateToNewChapterId(chapterId - 1);
+          };
+          decrementButton.style = baseButtonStyle;
+          decrementButton.onmouseover = () => (decrementButton.style.backgroundColor = "#0056b3");
+          decrementButton.onmouseleave = () => (decrementButton.style.backgroundColor = "#007bff");
+          const incrementButton = document.createElement("button");
+          incrementButton.textContent = "->";
+          incrementButton.onclick = () => {
+            navigateToNewChapterId(chapterId + 1);
+          };
+          incrementButton.style = baseButtonStyle;
+          incrementButton.onmouseover = () => (incrementButton.style.backgroundColor = "#0056b3");
+          incrementButton.onmouseleave = () => (incrementButton.style.backgroundColor = "#007bff");
+          //containerDiv.appendChild(document.createElement("br"));
+          containerDiv.appendChild(decrementButton);
+          containerDiv.appendChild(incrementButton);
+        }
+      }
       document.body.insertBefore(containerDiv, document.body.firstChild);
     }
   };
