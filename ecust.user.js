@@ -7,6 +7,7 @@
 // @license      Unlicense
 // @icon         https://s.ecust.edu.cn/favicon.ico
 // @match        *://mooc.s.ecust.edu.cn/*
+// @match        *://mooc1.chaoxing.com/*
 // @require      https://cdn.bootcdn.net/ajax/libs/vue/3.2.36/vue.global.prod.js
 // @require      https://cdn.bootcdn.net/ajax/libs/vue-demi/0.14.0/index.iife.js
 // @require      data:application/javascript,window.Vue%3DVue%3B
