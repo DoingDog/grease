@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.3.2
+// @version      0.4.1
 // @author       gpt-4-turbo
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
@@ -182,6 +182,27 @@
     document.body.appendChild(a);
     a.click();
   }
+  function modifyTags() {
+    // Select all h4 and h5 elements
+    const tags = document.querySelectorAll("h4, h5");
+
+    tags.forEach((tag) => {
+      // Find the first span and a elements within the tag
+      const firstSpan = tag.querySelector("span");
+      const firstA = tag.querySelector("a");
+
+      if (firstSpan && firstA) {
+        // Get the onclick attribute from the span
+        const onclickAttr = firstSpan.getAttribute("onclick");
+
+        if (onclickAttr) {
+          // Set the onclick attribute to the a tag and remove the href attribute
+          firstA.setAttribute("onclick", onclickAttr);
+          firstA.removeAttribute("href");
+        }
+      }
+    });
+  }
   document.addEventListener("DOMContentLoaded", () => {
     const consoleScript = `window.addEventListener("mouseout",t=>{t.stopImmediatePropagation(),t.stopPropagation(),t.preventDefault()},!0);`;
     // 运行控制台脚本
@@ -220,6 +241,7 @@
   });
   window.onload = () => {
     if (window === window.top) {
+      setInterval(modifyTags, 1000);
       let counter = parseInt(localStorage.getItem("scriptRunCounter"), 10) || 0;
       counter++;
       localStorage.setItem("scriptRunCounter", counter);
@@ -364,28 +386,6 @@
         containerDiv.appendChild(document.createElement("br"));
         containerDiv.appendChild(resetButton);
         // 将容器div添加到body的最开始的位置
-        const chapterId = parseInt(getChapterId(), 10);
-        if (!isNaN(chapterId)) {
-          const decrementButton = document.createElement("button");
-          decrementButton.textContent = "<-";
-          decrementButton.onclick = () => {
-            navigateToNewChapterId(chapterId - 1);
-          };
-          decrementButton.style = baseButtonStyle;
-          decrementButton.onmouseover = () => (decrementButton.style.backgroundColor = "#0056b3");
-          decrementButton.onmouseleave = () => (decrementButton.style.backgroundColor = "#007bff");
-          const incrementButton = document.createElement("button");
-          incrementButton.textContent = "->";
-          incrementButton.onclick = () => {
-            navigateToNewChapterId(chapterId + 1);
-          };
-          incrementButton.style = baseButtonStyle;
-          incrementButton.onmouseover = () => (incrementButton.style.backgroundColor = "#0056b3");
-          incrementButton.onmouseleave = () => (incrementButton.style.backgroundColor = "#007bff");
-          //containerDiv.appendChild(document.createElement("br"));
-          containerDiv.appendChild(decrementButton);
-          containerDiv.appendChild(incrementButton);
-        }
       }
       document.body.insertBefore(containerDiv, document.body.firstChild);
     }
