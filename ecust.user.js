@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.4.2
+// @version      0.4.3
 // @author       gpt-4-turbo
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
@@ -30,9 +30,14 @@
 // ==/UserScript==
 
 (() => {
+  // 添加保活功能的标志变量
+  window.scriptLoaded = false;
+
   let timer1;
   let timer2;
   let initialJobCount = null;
+
+  // 初始化本地存储项
   if (localStorage.getItem("scriptRunCounter") === null) {
     localStorage.setItem("scriptRunCounter", 0);
   }
@@ -48,6 +53,8 @@
   if (localStorage.getItem("courseSelectionMode") === null) {
     localStorage.setItem("courseSelectionMode", "0");
   }
+
+  // 检查课程的函数
   function checkLessons() {
     let currents = document.querySelectorAll(".currents");
     // 只在初始JobCount未设置时检查并设置它
@@ -75,7 +82,7 @@
         // 假设goback()是正确的“返回”操作
         const delay = parseInt(localStorage.getItem("autoReturnDelay"), 10) || 0;
         setTimeout(() => {
-          goback();
+          window.scriptLoaded = false;goback();
         }, delay);
         break;
       }
@@ -107,12 +114,15 @@
       }
     }
   }
-  // 其他函数定义...
+
+  // 判断是否已登录
   function isLoggedIn() {
     // 查找页面上是否有特定的“退出登录”链接
     const logoutLink = document.querySelector('a[href="#"][onclick="logout()"]');
     return logoutLink !== null;
   }
+
+  // 点击目标元素的函数
   function clickTargetElement() {
     // 如果未登录，则显示提示并停止自动点击
     if (!isLoggedIn()) {
@@ -133,14 +143,20 @@
       console.log("已点击: iboxAlertOk-confirm");
     }
   }
+
+  // 设置需要检查的章节号
   function setChapterToCheck(value) {
     localStorage.setItem("chapterToCheck", value);
     console.log(`Chapter to check has been set to: ${value}`);
   }
+
+  // 设置自动返回延时
   function setAutoReturnDelay(value) {
     localStorage.setItem("autoReturnDelay", value);
-    console.log(`Auto return delay has been set to: ${value}`);
+    console.log(`Auto return delay has been set to: ${value} milliseconds`);
   }
+
+  // 点击目标的h3元素
   function clickTargetH3() {
     const spans = document.querySelectorAll("span.articlename");
     spans.forEach((span) => {
@@ -167,10 +183,13 @@
       if (anchor) anchor.click();
     }
   }
+
+  // 获取章节ID
   function getChapterId() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get("chapterId");
   }
+
   // 构建新的URL并跳转
   function navigateToNewChapterId(chapterId) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -182,27 +201,31 @@
     document.body.appendChild(a);
     a.click();
   }
+
+  // 修改标签的函数
   function modifyTags() {
-    // Select all h4 and h5 elements
+    // 选择所有h4和h5元素
     const tags = document.querySelectorAll("h4, h5");
 
     tags.forEach((tag) => {
-      // Find the first span and a elements within the tag
+      // 查找第一个span和a元素
       const firstSpan = tag.querySelector("span");
       const firstA = tag.querySelector("a");
 
       if (firstSpan && firstA) {
-        // Get the onclick attribute from the span
+        // 获取span的onclick属性
         const onclickAttr = firstSpan.getAttribute("onclick");
 
         if (onclickAttr) {
-          // Set the onclick attribute to the a tag and remove the href attribute
+          // 将onclick属性设置到a标签并移除href属性
           firstA.setAttribute("onclick", onclickAttr);
           firstA.removeAttribute("href");
         }
       }
     });
   }
+
+  // 隐藏特定元素的函数
   function hideElements() {
     // 隐藏具有特定data-v-app属性的<div>
     let targetElementVApp = document.querySelector('div[data-v-app=""]');
@@ -210,6 +233,8 @@
       targetElementVApp.style.display = "none";
     }
   }
+
+  // 定义window.onload函数
   window.onload = () => {
     const consoleScript = `window.addEventListener("mouseout",t=>{t.stopImmediatePropagation(),t.stopPropagation(),t.preventDefault()},!0);`;
     // 运行控制台脚本
@@ -273,7 +298,7 @@
         let inputValue = document.getElementById("delayInput").value;
         if (inputValue.trim() !== "") {
           setAutoReturnDelay(inputValue);
-          console.log(`Auto return delay has been updated to: ${inputValue} seconds`);
+          console.log(`Auto return delay has been updated to: ${inputValue} milliseconds`);
         } else {
           alert("输入错误");
         }
@@ -378,5 +403,19 @@
     } else if (localStorage.getItem("courseSelectionMode") === "1") {
       const clickInterval = setInterval(clickTargetElement, 100);
     }
+
+    // 设置标志为已加载
+    window.scriptLoaded = true;
   };
+
+  // 添加保活检查
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      if (!window.scriptLoaded) {
+        console.warn("脚本未正常加载，正在尝试重新加载页面...");
+        window.location.reload();
+      }
+    }, 5000); // 5秒后检查
+  });
+
 })();
