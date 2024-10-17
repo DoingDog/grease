@@ -1,42 +1,20 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      0.4.3
+// @version      1.0.1
 // @author       gpt-4-turbo
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
 // @icon         https://s.ecust.edu.cn/favicon.ico
 // @match        *://mooc.s.ecust.edu.cn/*
 // @match        *://mooc1.chaoxing.com/*
-// @require      https://cdn.bootcdn.net/ajax/libs/vue/3.2.36/vue.global.prod.js
-// @require      https://cdn.bootcdn.net/ajax/libs/vue-demi/0.14.0/index.iife.js
-// @require      data:application/javascript,window.Vue%3DVue%3B
-// @require      https://cdn.bootcdn.net/ajax/libs/element-plus/2.3.4/index.full.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/pinia/2.0.35/pinia.iife.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/rxjs/7.8.0/rxjs.umd.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js
-// @require      https://update.greasyfork.org/scripts/488083.user.js
-// @resource     ElementPlus  https://cdn.bootcdn.net/ajax/libs/element-plus/2.3.4/index.css
-// @resource     ttf          https://www.forestpolice.org/ttf/2.0/table.json
-// @connect      www.tiku.me
-// @connect      cx.icodef.com
-// @grant        GM_getResourceText
-// @grant        GM_getValue
-// @grant        GM_info
-// @grant        GM_setValue
-// @grant        GM_xmlhttpRequest
-// @grant        unsafeWindow
-// @run-at       document-start
 // ==/UserScript==
 
 (() => {
-  // 添加保活功能的标志变量
-  window.scriptLoaded = false;
-
   let timer1;
   let timer2;
   let initialJobCount = null;
-
+  let clickInterval;
   // 初始化本地存储项
   if (localStorage.getItem("scriptRunCounter") === null) {
     localStorage.setItem("scriptRunCounter", 0);
@@ -53,17 +31,8 @@
   if (localStorage.getItem("courseSelectionMode") === null) {
     localStorage.setItem("courseSelectionMode", "0");
   }
-
-  // 检查课程的函数
-  function checkLessons() {
+  function checkStop() {
     let currents = document.querySelectorAll(".currents");
-    // 只在初始JobCount未设置时检查并设置它
-    if (initialJobCount === null) {
-      const initialSpan = document.querySelector(".currents .roundpointStudent.orange01.a002.jobCount");
-      if (initialSpan) {
-        initialJobCount = parseInt(initialSpan.textContent, 10); // 将初始的数字存储起来
-      }
-    }
     let chapterToCheck = localStorage.getItem("chapterToCheck");
     for (let i = 0; i < currents.length; i++) {
       let hideChapterNumber = currents[i].querySelector(".hideChapterNumber");
@@ -76,43 +45,141 @@
         window.location.href = "about:blank";
         return; // 防止继续执行后续代码
       }
-      if (currents[i].querySelector(".roundpointStudent.blue") || currents[i].querySelector(".roundpoint.blue")) {
-        clearInterval(timer1);
-        clearInterval(timer2);
-        // 假设goback()是正确的“返回”操作
-        const delay = parseInt(localStorage.getItem("autoReturnDelay"), 10) || 0;
-        setTimeout(() => {
-          window.scriptLoaded = false;goback();
-        }, delay);
-        break;
+    }
+  }
+  // 检查课程的函数
+  function checkLessons() {
+    let videoPlayed = false; // 标志，表示是否已经播放过视频
+    let isScriptPause = false; // 标志，表示是否由脚本触发的暂停
+
+    // 等待 iframe 元素加载完成后查找并自动播放
+    function waitForIframeAndPlay() {
+      checkStop();
+      if (videoPlayed) {
+        console.log("已播放视频，停止脚本。");
+        return; // 如果已经播放过视频，停止执行
       }
-      // 检查是否存在并且数值是否减小
-      const currentSpan = currents[i].querySelector(".roundpointStudent.orange01.a002.jobCount");
-      // 假设initialJobCount, timer1, 和timer2 在适当的作用域中已经定义
-      if (currentSpan) {
-        const currentJobCount = parseInt(currentSpan.textContent, 10);
-        if (initialJobCount !== null && currentJobCount < initialJobCount) {
-          // 停止其他定时代码
-          clearInterval(timer1);
-          clearInterval(timer2);
-          // 获取延时设置（以毫秒为单位）
-          const delay = parseInt(localStorage.getItem("autoReturnDelay"), 10) || 0; // 如果没有设置，默认为0
-          // 延时后刷新页面
-          setTimeout(() => {
-            location.reload();
-          }, delay);
-          return; // 退出函数，不再继续检查
+
+      // 查找页面中的第一个 iframe
+      const outerIframe = document.querySelector("iframe");
+
+      if (outerIframe) {
+        console.log("找到外层 iframe，正在加载...");
+        try {
+          // 获取外层 iframe 的内容窗口和文档
+          const outerIframeDocument = outerIframe.contentWindow.document;
+
+          // 替换所有class为ans-attach-ct ans-job-finished的div为占位元素
+          const divsToReplace = outerIframeDocument.querySelectorAll("div.ans-attach-ct.ans-job-finished");
+          if (divsToReplace.length > 0) {
+            divsToReplace.forEach((div) => {
+              // 创建占位元素
+              const placeholder = outerIframeDocument.createElement("div");
+              // 设置占位元素的样式
+              placeholder.style.width = "100%";
+              placeholder.style.height = "200px"; // 根据需要调整高度
+              placeholder.style.backgroundColor = "#f0f0f0";
+              placeholder.style.display = "flex";
+              placeholder.style.alignItems = "center";
+              placeholder.style.justifyContent = "center";
+              placeholder.style.border = "2px solid #ccc";
+              placeholder.style.boxSizing = "border-box";
+              placeholder.style.fontSize = "24px";
+              placeholder.style.color = "#555";
+              // 设置占位文本
+              placeholder.textContent = "已播放完毕";
+
+              // 替换原有的div
+              div.parentNode.replaceChild(placeholder, div);
+              console.log("已替换一个ans-attach-ct ans-job-finished的div元素为占位元素");
+            });
+          } else {
+            console.log('未找到具有class "ans-attach-ct ans-job-finished" 的div元素');
+          }
+
+          // 查找外层 iframe 中的第一个内层 iframe
+          const innerIframe = outerIframeDocument.querySelector("iframe");
+
+          if (innerIframe) {
+            console.log("找到内层 iframe，正在加载...");
+            try {
+              // 获取内层 iframe 的内容窗口和文档
+              const innerIframeDocument = innerIframe.contentWindow.document;
+
+              // 查找内层 iframe 中的第一个视频元素
+              const video = innerIframeDocument.querySelector("video");
+
+              if (video) {
+                video.muted = true; // 静音视频
+                video
+                  .play()
+                  .then(() => {
+                    console.log("视频已开始播放");
+                    videoPlayed = true; // 设置标志，表示已播放
+
+                    // 添加事件监听器以监测视频状态变化
+                    const onVideoStateChange = ({ type }) => {
+                      if (isScriptPause) {
+                        // 忽略脚本自身触发的暂停
+                        return;
+                      }
+                      console.log(`检测到视频事件: ${type}`);
+                      // 在事件发生后延迟1秒
+                      setTimeout(() => {
+                        goback();
+                      }, 1000);
+                      // 移除事件监听器，防止多次弹窗
+                      video.removeEventListener("pause", onVideoStateChange);
+                      video.removeEventListener("ended", onVideoStateChange);
+                    };
+
+                    video.addEventListener("pause", onVideoStateChange);
+                    video.addEventListener("ended", onVideoStateChange);
+
+                    // 在播放后1秒暂停视频
+                    setTimeout(() => {
+                      isScriptPause = true; // 标记即将由脚本暂停
+                      video.pause();
+                      console.log("视频已暂停");
+
+                      // 再过1秒继续播放视频
+                      setTimeout(() => {
+                        video
+                          .play()
+                          .then(() => {
+                            console.log("视频已继续播放");
+                            isScriptPause = false; // 解除标记
+                          })
+                          .catch((err) => {
+                            console.log("继续播放视频时出错:", err);
+                            isScriptPause = false; // 解除标记
+                          });
+                      }, 1000);
+                    }, 1000);
+                  })
+                  .catch((error) => {
+                    console.log("播放视频时出错:", error);
+                  });
+              } else {
+                console.log("未找到视频元素");
+              }
+            } catch (error) {
+              console.log("无法访问内层 iframe 内容，可能是跨域限制:", error);
+            }
+          } else {
+            console.log("未找到内层 iframe");
+          }
+        } catch (error) {
+          console.log("无法访问外层 iframe 内容，可能是跨域限制:", error);
         }
-      } else if (initialJobCount !== null) {
-        clearInterval(timer1);
-        clearInterval(timer2);
-        const delay = parseInt(localStorage.getItem("autoReturnDelay"), 10) || 0;
-        setTimeout(() => {
-          location.reload();
-        }, delay);
-        return;
+      } else {
+        console.log("未找到外层 iframe，延迟重试...");
+        setTimeout(waitForIframeAndPlay, 1000); // 每隔1秒重试
       }
     }
+
+    // 页面加载完成后延迟3秒开始查找并播放
+    setTimeout(waitForIframeAndPlay, 2000);
   }
 
   // 判断是否已登录
@@ -150,12 +217,6 @@
     console.log(`Chapter to check has been set to: ${value}`);
   }
 
-  // 设置自动返回延时
-  function setAutoReturnDelay(value) {
-    localStorage.setItem("autoReturnDelay", value);
-    console.log(`Auto return delay has been set to: ${value} milliseconds`);
-  }
-
   // 点击目标的h3元素
   function clickTargetH3() {
     const spans = document.querySelectorAll("span.articlename");
@@ -184,24 +245,6 @@
     }
   }
 
-  // 获取章节ID
-  function getChapterId() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get("chapterId");
-  }
-
-  // 构建新的URL并跳转
-  function navigateToNewChapterId(chapterId) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set("chapterId", chapterId);
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    const a = document.createElement("a");
-    a.href = newUrl;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-  }
-
   // 修改标签的函数
   function modifyTags() {
     // 选择所有h4和h5元素
@@ -225,197 +268,143 @@
     });
   }
 
-  // 隐藏特定元素的函数
-  function hideElements() {
-    // 隐藏具有特定data-v-app属性的<div>
-    let targetElementVApp = document.querySelector('div[data-v-app=""]');
-    if (targetElementVApp) {
-      targetElementVApp.style.display = "none";
-    }
-  }
-
-  // 定义window.onload函数
-  window.onload = () => {
-    const consoleScript = `window.addEventListener("mouseout",t=>{t.stopImmediatePropagation(),t.stopPropagation(),t.preventDefault()},!0);`;
-    // 运行控制台脚本
-    const runConsoleScript = () => {
-      const script = document.createElement("script");
-      script.textContent = consoleScript;
-      document.head.appendChild(script);
-      script.remove();
-    };
-    runConsoleScript();
-
-    if (window === window.top) {
-      setInterval(hideElements, 1000);
-      setInterval(modifyTags, 1000);
-      let counter = parseInt(localStorage.getItem("scriptRunCounter"), 10) || 0;
-      counter++;
-      localStorage.setItem("scriptRunCounter", counter);
-      let titleElement = document.querySelector("h1");
-      if (titleElement) {
-        titleElement.innerText = `程序运行中 <${counter}> - ${titleElement.innerText}`;
-      }
-      // 创建一个容器div
-      let containerDiv = document.createElement("div");
-      containerDiv.style.padding = "10px";
-      containerDiv.style.backgroundColor = "#f0f0f0";
-      containerDiv.style.textAlign = "center";
-      // 创建章节检查输入框
-      let inputFieldChapter = document.createElement("input");
-      inputFieldChapter.setAttribute("type", "text");
-      inputFieldChapter.setAttribute("placeholder", "输入自动停止的章节号 如1.3");
-      inputFieldChapter.id = "chapterInput";
-      let storedChapter = localStorage.getItem("chapterToCheck");
-      if (storedChapter) {
-        inputFieldChapter.value = storedChapter;
-      }
-      // 创建确认按钮
-      let confirmButtonChapter = document.createElement("button");
-      confirmButtonChapter.textContent = "设置终止";
-      confirmButtonChapter.onclick = () => {
-        let inputValue = document.getElementById("chapterInput").value;
-        if (inputValue.trim() !== "") {
-          setChapterToCheck(inputValue);
-          console.log(`Chapter to check has been updated to: ${inputValue}`);
-        } else {
-          alert("输入错误");
-        }
-      };
-      // 创建自动返回延时输入框
-      let inputFieldDelay = document.createElement("input");
-      inputFieldDelay.setAttribute("type", "number"); // 确保只能输入数字
-      inputFieldDelay.setAttribute("placeholder", "设置自动返回延时 (ms) ");
-      inputFieldDelay.id = "delayInput";
-      let storedDelay = localStorage.getItem("autoReturnDelay");
-      if (storedDelay) {
-        inputFieldDelay.value = storedDelay;
-      }
-      // 创建确认按钮
-      let confirmButtonDelay = document.createElement("button");
-      confirmButtonDelay.textContent = "设置延时";
-      confirmButtonDelay.onclick = () => {
-        let inputValue = document.getElementById("delayInput").value;
-        if (inputValue.trim() !== "") {
-          setAutoReturnDelay(inputValue);
-          console.log(`Auto return delay has been updated to: ${inputValue} milliseconds`);
-        } else {
-          alert("输入错误");
-        }
-      };
-      // 创建自动托管模式开关
-      let autoManageSwitch = document.createElement("input");
-      autoManageSwitch.setAttribute("type", "checkbox");
-      autoManageSwitch.id = "autoManageSwitch";
-      let storedAutoManageMode = localStorage.getItem("autoManageMode");
-      autoManageSwitch.checked = storedAutoManageMode === "1"; // 如果存储值为1，则选中
-      // 创建自动托管模式标签
-      let autoManageLabel = document.createElement("label");
-      autoManageLabel.setAttribute("for", "autoManageSwitch");
-      autoManageLabel.textContent = "全自动托管模式";
-      // 为开关添加事件监听器
-      autoManageSwitch.onchange = () => {
-        localStorage.setItem("autoManageMode", autoManageSwitch.checked ? "1" : "0");
-        //alert(`全自动托管模式已${autoManageSwitch.checked ? "启用" : "禁用"}`);
-        window.location.reload();
-      };
-      // 创建重置按钮
-      let resetButton = document.createElement("button");
-      resetButton.textContent = "重置程序";
-      resetButton.onclick = () => {
-        localStorage.removeItem("scriptRunCounter");
-        localStorage.removeItem("chapterToCheck");
-        localStorage.removeItem("autoReturnDelay");
-        localStorage.removeItem("autoManageMode");
-        //alert("所有设置已重置");
-        window.location.reload(); // 重载页面以反映重置后的状态
-      };
-      // 创建选课模式开关
-      let courseSelectionSwitch = document.createElement("input");
-      courseSelectionSwitch.setAttribute("type", "checkbox");
-      courseSelectionSwitch.id = "courseSelectionSwitch";
-      let storedCourseSelectionMode = localStorage.getItem("courseSelectionMode");
-      courseSelectionSwitch.checked = storedCourseSelectionMode === "1"; // 如果存储值为1，则选中
-      // 创建选课模式标签
-      let courseSelectionLabel = document.createElement("label");
-      courseSelectionLabel.setAttribute("for", "courseSelectionSwitch");
-      courseSelectionLabel.textContent = "选课模式";
-      // 为开关添加事件监听器
-      courseSelectionSwitch.onchange = () => {
-        localStorage.setItem("courseSelectionMode", courseSelectionSwitch.checked ? "1" : "0");
-        //alert(`选课模式已${courseSelectionSwitch.checked ? "启用" : "禁用"}`);
-        window.location.reload();
-      };
-      containerDiv.style.padding = "20px";
-      containerDiv.style.marginBottom = "20px";
-      containerDiv.style.backgroundColor = "#ffffff";
-      containerDiv.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)";
-      containerDiv.style.borderRadius = "8px";
-      containerDiv.style.textAlign = "center";
-      const baseInputStyle = "margin: 5px; padding: 10px; width: 80%; max-width: 300px; border-radius: 4px; border: 1px solid #ccc;";
-      const baseButtonStyle = "cursor: pointer; margin: 5px; padding: 10px 15px; border: none; border-radius: 4px; background-color: #007bff; color: white;";
-      inputFieldChapter.style = baseInputStyle;
-      confirmButtonChapter.style = baseButtonStyle;
-      confirmButtonChapter.onmouseover = () => (confirmButtonChapter.style.backgroundColor = "#0056b3"); // Hover效果
-      confirmButtonChapter.onmouseleave = () => (confirmButtonChapter.style.backgroundColor = "#007bff"); // 鼠标离开时恢复颜色
-      inputFieldDelay.style = baseInputStyle;
-      confirmButtonDelay.style = baseButtonStyle;
-      confirmButtonDelay.onmouseover = () => (confirmButtonDelay.style.backgroundColor = "#0056b3");
-      confirmButtonDelay.onmouseleave = () => (confirmButtonDelay.style.backgroundColor = "#007bff");
-      // 自动托管模式开关样式调整
-      autoManageSwitch.style = "margin: 10px; cursor: pointer;";
-      // 自动托管模式标签样式调整
-      autoManageLabel.style = "color: #333; font-size: 14px;";
-      // 选课模式开关样式调整
-      courseSelectionSwitch.style = "margin: 10px; cursor: pointer;";
-      // 选课模式标签样式调整
-      courseSelectionLabel.style = "color: #333; font-size: 14px;";
-      // 重置按钮样式调整
-      resetButton.style = "cursor: pointer; margin-top: 20px; padding: 10px 15px; border: none; border-radius: 4px; background-color: #dc3545; color: white;";
-      resetButton.onmouseover = () => (resetButton.style.backgroundColor = "#c82333"); // Hover效果
-      resetButton.onmouseleave = () => (resetButton.style.backgroundColor = "#dc3545"); // 鼠标离开时恢复颜色
-      // 将新创建的元素添加到容器div中
-      if (window.location.href.indexOf("https://mooc.s.ecust.edu.cn/course/") === 0) {
-        containerDiv.appendChild(document.createElement("br"));
-        containerDiv.appendChild(courseSelectionSwitch);
-        containerDiv.appendChild(courseSelectionLabel);
-      } else {
-        // 将元素添加到容器div中
-        containerDiv.appendChild(inputFieldChapter);
-        containerDiv.appendChild(confirmButtonChapter);
-        containerDiv.appendChild(document.createElement("br")); // 添加换行，美观分隔
-        containerDiv.appendChild(inputFieldDelay);
-        containerDiv.appendChild(confirmButtonDelay);
-        // 将新创建的元素添加到容器div中
-        containerDiv.appendChild(document.createElement("br"));
-        containerDiv.appendChild(autoManageSwitch);
-        containerDiv.appendChild(autoManageLabel);
-        containerDiv.appendChild(document.createElement("br"));
-        containerDiv.appendChild(resetButton);
-        // 将容器div添加到body的最开始的位置
-      }
-      document.body.insertBefore(containerDiv, document.body.firstChild);
-    }
-
-    if (localStorage.getItem("autoManageMode") === "1") {
-      timer1 = setInterval(checkLessons, 1000);
-      timer2 = setInterval(clickTargetH3, 1000);
-    } else if (localStorage.getItem("courseSelectionMode") === "1") {
-      const clickInterval = setInterval(clickTargetElement, 100);
-    }
-
-    // 设置标志为已加载
-    window.scriptLoaded = true;
+  const consoleScript = `window.addEventListener("mouseout",t=>{t.stopImmediatePropagation(),t.stopPropagation(),t.preventDefault()},!0);`;
+  // 运行控制台脚本
+  const runConsoleScript = () => {
+    const script = document.createElement("script");
+    script.textContent = consoleScript;
+    document.head.appendChild(script);
+    script.remove();
   };
+  runConsoleScript();
 
-  // 添加保活检查
-  window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      if (!window.scriptLoaded) {
-        console.warn("脚本未正常加载，正在尝试重新加载页面...");
-        window.location.reload();
+  if (window === window.top) {
+    setInterval(modifyTags, 1000);
+    let counter = parseInt(localStorage.getItem("scriptRunCounter"), 10) || 0;
+    counter++;
+    localStorage.setItem("scriptRunCounter", counter);
+    let titleElement = document.querySelector("h1");
+    if (titleElement) {
+      titleElement.innerText = `程序运行中 <${counter}> - ${titleElement.innerText}`;
+    }
+    // 创建一个容器div
+    let containerDiv = document.createElement("div");
+    containerDiv.style.padding = "10px";
+    containerDiv.style.backgroundColor = "#f0f0f0";
+    containerDiv.style.textAlign = "center";
+    // 创建章节检查输入框
+    let inputFieldChapter = document.createElement("input");
+    inputFieldChapter.setAttribute("type", "text");
+    inputFieldChapter.setAttribute("placeholder", "输入自动停止的章节号 如1.3");
+    inputFieldChapter.id = "chapterInput";
+    let storedChapter = localStorage.getItem("chapterToCheck");
+    if (storedChapter) {
+      inputFieldChapter.value = storedChapter;
+    }
+    // 创建确认按钮
+    let confirmButtonChapter = document.createElement("button");
+    confirmButtonChapter.textContent = "设置终止";
+    confirmButtonChapter.onclick = () => {
+      let inputValue = document.getElementById("chapterInput").value;
+      if (inputValue.trim() !== "") {
+        setChapterToCheck(inputValue);
+        console.log(`Chapter to check has been updated to: ${inputValue}`);
+      } else {
+        alert("输入错误");
       }
-    }, 5000); // 5秒后检查
-  });
+    };
 
+    // 创建自动托管模式开关
+    let autoManageSwitch = document.createElement("input");
+    autoManageSwitch.setAttribute("type", "checkbox");
+    autoManageSwitch.id = "autoManageSwitch";
+    let storedAutoManageMode = localStorage.getItem("autoManageMode");
+    autoManageSwitch.checked = storedAutoManageMode === "1"; // 如果存储值为1，则选中
+    // 创建自动托管模式标签
+    let autoManageLabel = document.createElement("label");
+    autoManageLabel.setAttribute("for", "autoManageSwitch");
+    autoManageLabel.textContent = "自动切集";
+    // 为开关添加事件监听器
+    autoManageSwitch.onchange = () => {
+      localStorage.setItem("autoManageMode", autoManageSwitch.checked ? "1" : "0");
+      //alert(`全自动托管模式已${autoManageSwitch.checked ? "启用" : "禁用"}`);
+      window.location.reload();
+    };
+    // 创建重置按钮
+    let resetButton = document.createElement("button");
+    resetButton.textContent = "重置程序";
+    resetButton.onclick = () => {
+      localStorage.removeItem("scriptRunCounter");
+      localStorage.removeItem("chapterToCheck");
+      localStorage.removeItem("autoReturnDelay");
+      localStorage.removeItem("autoManageMode");
+      //alert("所有设置已重置");
+      window.location.reload(); // 重载页面以反映重置后的状态
+    };
+    // 创建选课模式开关
+    let courseSelectionSwitch = document.createElement("input");
+    courseSelectionSwitch.setAttribute("type", "checkbox");
+    courseSelectionSwitch.id = "courseSelectionSwitch";
+    let storedCourseSelectionMode = localStorage.getItem("courseSelectionMode");
+    courseSelectionSwitch.checked = storedCourseSelectionMode === "1"; // 如果存储值为1，则选中
+    // 创建选课模式标签
+    let courseSelectionLabel = document.createElement("label");
+    courseSelectionLabel.setAttribute("for", "courseSelectionSwitch");
+    courseSelectionLabel.textContent = "选课模式";
+    // 为开关添加事件监听器
+    courseSelectionSwitch.onchange = () => {
+      localStorage.setItem("courseSelectionMode", courseSelectionSwitch.checked ? "1" : "0");
+      //alert(`选课模式已${courseSelectionSwitch.checked ? "启用" : "禁用"}`);
+      window.location.reload();
+    };
+    containerDiv.style.padding = "20px";
+    containerDiv.style.marginBottom = "20px";
+    containerDiv.style.backgroundColor = "#ffffff";
+    containerDiv.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)";
+    containerDiv.style.borderRadius = "8px";
+    containerDiv.style.textAlign = "center";
+    const baseInputStyle = "margin: 5px; padding: 10px; width: 80%; max-width: 300px; border-radius: 4px; border: 1px solid #ccc;";
+    const baseButtonStyle = "cursor: pointer; margin: 5px; padding: 10px 15px; border: none; border-radius: 4px; background-color: #007bff; color: white;";
+    inputFieldChapter.style = baseInputStyle;
+    confirmButtonChapter.style = baseButtonStyle;
+    confirmButtonChapter.onmouseover = () => (confirmButtonChapter.style.backgroundColor = "#0056b3"); // Hover效果
+    confirmButtonChapter.onmouseleave = () => (confirmButtonChapter.style.backgroundColor = "#007bff"); // 鼠标离开时恢复颜色
+    // 自动托管模式开关样式调整
+    autoManageSwitch.style = "margin: 10px; cursor: pointer;";
+    // 自动托管模式标签样式调整
+    autoManageLabel.style = "color: #333; font-size: 14px;";
+    // 选课模式开关样式调整
+    courseSelectionSwitch.style = "margin: 10px; cursor: pointer;";
+    // 选课模式标签样式调整
+    courseSelectionLabel.style = "color: #333; font-size: 14px;";
+    // 重置按钮样式调整
+    resetButton.style = "cursor: pointer; margin-top: 20px; padding: 10px 15px; border: none; border-radius: 4px; background-color: #dc3545; color: white;";
+    resetButton.onmouseover = () => (resetButton.style.backgroundColor = "#c82333"); // Hover效果
+    resetButton.onmouseleave = () => (resetButton.style.backgroundColor = "#dc3545"); // 鼠标离开时恢复颜色
+    // 将新创建的元素添加到容器div中
+    if (window.location.href.indexOf("https://mooc.s.ecust.edu.cn/course/") === 0) {
+      containerDiv.appendChild(document.createElement("br"));
+      containerDiv.appendChild(courseSelectionSwitch);
+      containerDiv.appendChild(courseSelectionLabel);
+    } else {
+      // 将元素添加到容器div中
+      containerDiv.appendChild(inputFieldChapter);
+      containerDiv.appendChild(confirmButtonChapter);
+      containerDiv.appendChild(document.createElement("br")); // 添加换行，美观分隔
+      // 将新创建的元素添加到容器div中
+      containerDiv.appendChild(document.createElement("br"));
+      containerDiv.appendChild(autoManageSwitch);
+      containerDiv.appendChild(autoManageLabel);
+      containerDiv.appendChild(document.createElement("br"));
+      containerDiv.appendChild(resetButton);
+      // 将容器div添加到body的最开始的位置
+    }
+    document.body.insertBefore(containerDiv, document.body.firstChild);
+  }
+  checkLessons();
+  if (localStorage.getItem("autoManageMode") === "1") {
+    timer2 = setInterval(clickTargetH3, 2000);
+  } else if (localStorage.getItem("courseSelectionMode") === "1") {
+    clickInterval = setInterval(clickTargetElement, 100);
+  }
 })();
