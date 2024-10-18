@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      1.0.2
+// @version      1.0.3
 // @author       gpt-4-turbo
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
@@ -232,6 +232,7 @@
         }
       });
     });
+
     let h3Elements = document.querySelectorAll("h3");
     let targetElement = null;
     for (let i = 0; i < h3Elements.length; i++) {
@@ -240,9 +241,36 @@
         break;
       }
     }
+
     if (targetElement) {
       let anchor = targetElement.querySelector("a");
       if (anchor) anchor.click();
+    } else {
+      // 如果找不到 em.orange，检查是否存在 em.openlock
+      let openLockElements = document.querySelectorAll("em.openlock");
+      if (openLockElements.length > 0) {
+        // 找到 class 为 "content1 roundcorner" 的 div 元素
+        let contentDiv = document.querySelector("div.content1.roundcorner");
+        if (contentDiv) {
+          // 创建占位符元素
+          let placeholder = document.createElement("div");
+          // 设置占位符样式（根据需要调整样式）
+          placeholder.style.width = "100%";
+          placeholder.style.height = "200px"; // 根据需要调整大小
+          placeholder.style.display = "flex";
+          placeholder.style.justifyContent = "center";
+          placeholder.style.alignItems = "center";
+          placeholder.style.backgroundColor = "#f0f0f0";
+          placeholder.style.border = "2px solid #ccc";
+          placeholder.style.borderRadius = "8px";
+          placeholder.style.fontSize = "24px";
+          placeholder.style.color = "#555";
+          placeholder.textContent = "已全部播放完毕";
+
+          // 替换原有的 div 元素
+          contentDiv.parentNode.replaceChild(placeholder, contentDiv);
+        }
+      }
     }
   }
 
