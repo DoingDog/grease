@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      1.0.3
+// @version      1.0.5
 // @author       gpt-4-turbo
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
@@ -79,7 +79,7 @@
               // 设置占位元素的样式
               placeholder.style.width = "100%";
               placeholder.style.height = "200px"; // 根据需要调整高度
-              placeholder.style.backgroundColor = "#f0f0f0";
+              placeholder.style.backgroundColor = "#f0fff0";
               placeholder.style.display = "flex";
               placeholder.style.alignItems = "center";
               placeholder.style.justifyContent = "center";
@@ -87,6 +87,8 @@
               placeholder.style.boxSizing = "border-box";
               placeholder.style.fontSize = "24px";
               placeholder.style.color = "#555";
+              placeholder.style.borderRadius = "20px"; // 添加圆角
+
               // 设置占位文本
               placeholder.textContent = "已播放完毕";
 
@@ -163,6 +165,36 @@
                   });
               } else {
                 console.log("未找到视频元素");
+
+                // 替换包含内层 iframe 的 ans-attach-ct div 为“非视频内容”
+                const parentDiv = innerIframe.closest("div.ans-attach-ct");
+                if (parentDiv) {
+                  const placeholder = outerIframeDocument.createElement("div"); // 使用外层 iframe 的文档
+                  // 设置占位元素的样式（与“已播放完毕”一致）
+                  placeholder.style.width = "100%";
+                  placeholder.style.height = "200px"; // 根据需要调整高度
+                  placeholder.style.backgroundColor = "#fff0f0";
+                  placeholder.style.display = "flex";
+                  placeholder.style.alignItems = "center";
+                  placeholder.style.justifyContent = "center";
+                  placeholder.style.border = "2px solid #ccc";
+                  placeholder.style.boxSizing = "border-box";
+                  placeholder.style.fontSize = "24px";
+                  placeholder.style.color = "#555";
+                  placeholder.style.borderRadius = "20px"; // 添加圆角
+
+                  // 设置占位文本
+                  placeholder.textContent = "非视频内容";
+
+                  // 替换原有的div
+                  parentDiv.parentNode.replaceChild(placeholder, parentDiv);
+                  console.log("已替换包含内层 iframe 的ans-attach-ct div元素为“非视频内容”的占位元素");
+
+                  // 重新运行整个查找
+                  setTimeout(waitForIframeAndPlay, 1000); // 延迟1秒后重试
+                } else {
+                  console.log("无法找到包含内层 iframe 的ans-attach-ct div元素");
+                }
               }
             } catch (error) {
               console.log("无法访问内层 iframe 内容，可能是跨域限制:", error);
