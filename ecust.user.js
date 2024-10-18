@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         [ECUST] 华东理工 旧版学习通 全自动刷课
 // @namespace    ddin
-// @version      1.0.1
+// @version      1.0.2
 // @author       gpt-4-turbo
 // @description  华东理工旧版超星学习通专刷（高数线代大物） mooc.s.ecust.edu.cn
 // @license      Unlicense
 // @icon         https://s.ecust.edu.cn/favicon.ico
 // @match        *://mooc.s.ecust.edu.cn/*
 // @match        *://mooc1.chaoxing.com/*
+// @grant        none
 // ==/UserScript==
 
 (() => {
@@ -234,7 +235,7 @@
     let h3Elements = document.querySelectorAll("h3");
     let targetElement = null;
     for (let i = 0; i < h3Elements.length; i++) {
-      if (h3Elements[i].querySelector("em.orange, em.blank")) {
+      if (h3Elements[i].querySelector("em.orange")) {
         targetElement = h3Elements[i];
         break;
       }
